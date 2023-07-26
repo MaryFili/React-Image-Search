@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import './App.css'
 import SearchForm from './components/SearchForm'
@@ -13,25 +13,27 @@ function App() {
   const [page, setPage] = useState(1);
 
 
-  async function searchImages(e) {
-    e.preventDefault()
+  useEffect(() => {
+    async function searchImages() {
+      const inputData = searchInput;
+      const url = `https://api.unsplash.com/search/photos?page=${page}&query=${inputData}&client_id=${accessKey}`;
+      const response = await fetch(url);
+      const data = await response.json();
 
-    const inputData = searchInput;
-    const url = `https://api.unsplash.com/search/photos?page=${page}&query=${inputData}&client_id=${accessKey}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    setResults(data.results);
-    console.log(data.results);
-    setSearchInput("");
-    setPage(page + 1)
-  }
+      // If it's a new search (page === 1), set the results directly.
+      // Otherwise, concatenate the new results to the existing results.
+      setResults((prevResults) => (page === 1 ? data.results : [...prevResults, ...data.results]));
+    }
+
+    searchImages();
+  }, [searchInput, page]);
 
   return (
     <>
       <h1 className="app-title">Image Search App</h1>
-      <SearchForm searchImages={searchImages} searchInput={searchInput} setSearchInput={setSearchInput} />
+      <SearchForm searchInput={searchInput} setSearchInput={setSearchInput} setPage={setPage} page={page} />
       <Results results={results} page={page} />
-      <ShowMoreBtn />
+      <ShowMoreBtn setPage={setPage} page={page} />
     </>
   )
 }
